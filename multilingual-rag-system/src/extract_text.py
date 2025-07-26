@@ -1,0 +1,32 @@
+import pytesseract
+from pdf2image import convert_from_path
+import re
+from indicnlp.tokenize import indic_tokenize
+
+def extract_text_with_ocr(pdf_path):
+    """
+    Extract text from a PDF using Tesseract OCR with Bengali language support.
+    """
+    try:
+        images = convert_from_path(pdf_path)
+        text = ""
+        for image in images:
+            text += pytesseract.image_to_string(image, lang='ben') + "\n"
+        return clean_text(text)
+    except Exception as e:
+        raise Exception(f"Error extracting text: {str(e)}")
+
+def clean_text(text):
+    """
+    Clean and normalize Bengali text.
+    """
+    text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
+    text = re.sub(r'[^\w\s।]', '', text)  # Remove special characters except Bengali punctuation
+    tokens = indic_tokenize.trivial_tokenize(text, lang='bn')
+    return ' '.join(tokens)
+
+if __name__ == "__main__":
+    pdf_path = "../data/hsc26_bangla_1st_paper.pdf"
+    extracted_text = extract_text_with_ocr(pdf_path)
+    with open("extracted_text.txt", "w", encoding="utf-8") as f:
+        f.write(extracted_text)
